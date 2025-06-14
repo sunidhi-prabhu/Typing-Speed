@@ -1,24 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate }
- from 'react-router-dom';
- 
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import io from 'socket.io-client';
 import axios from 'axios';
 import './styles.css';
-
-const socket = io(import.meta.env.VITE_BACKEND_URL, { autoConnect: false });
 
 const Home = () => {
   const [mode, setMode] = useState(null);
   const isLoggedIn = !!localStorage.getItem('token');
   const navigate = useNavigate();
-
-  const handleInviteFriend = () => {
-    const inviteLink = `${window.location.origin}/typing?mode=compete&invite=${Date.now()}`;
-    navigator.clipboard.writeText(inviteLink);
-    alert('Invite link copied! Share with your friend.');
-  };
 
   return (
     <motion.div
@@ -30,69 +19,39 @@ const Home = () => {
       <motion.h1
         initial={{ y: -50 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
         className="home-title"
       >
         Typing Speed Test
       </motion.h1>
       <div className="button-group">
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.1, boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)' }}
           transition={{ duration: 0.2 }}
           onClick={() => setMode('practice')}
           className="button button-practice"
         >
           Practice
         </motion.button>
-        {isLoggedIn ? (
-          <>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setMode('compete')}
-              className="button button-compete"
-            >
-              Compete
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.2 }}
-              onClick={handleInviteFriend}
-              className="button button-invite"
-            >
-              Invite Friend
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => navigate('/typing?mode=ai')}
-              className="button button-ai"
-            >
-              Compete with AI
-            </motion.button>
-          </>
-        ) : (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="login-prompt"
+        {isLoggedIn && (
+          <motion.button
+            whileHover={{ scale: 1.1, boxShadow: '0 0 15px rgba(245, 158, 11, 0.5)' }}
+            transition={{ duration: 0.2 }}
+            onClick={() => navigate('/typing?mode=ai')}
+            className="button button-ai"
           >
-            Login to compete!
-          </motion.p>
+            Compete with AI
+          </motion.button>
         )}
       </div>
-      {mode && isLoggedIn && (
+      {mode && (
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
           className="start-link-container"
         >
-          <Link
-            to={`/typing?mode=${mode}`}
-            className="start-link"
-          >
+          <Link to={`/typing?mode=${mode}`} className="start-link">
             Start {mode === 'practice' ? 'Practicing' : 'Competing'}
           </Link>
         </motion.div>
@@ -140,7 +99,7 @@ const Login = () => {
       <motion.form
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
         onSubmit={handleLogin}
         className="auth-form"
       >
@@ -160,7 +119,7 @@ const Login = () => {
           className="auth-input"
         />
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
           transition={{ duration: 0.2 }}
           type="submit"
           className="auth-button"
@@ -197,7 +156,7 @@ const Register = () => {
       <motion.form
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
         onSubmit={handleRegister}
         className="auth-form"
       >
@@ -217,7 +176,7 @@ const Register = () => {
           className="auth-input"
         />
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, boxShadow: '0 0 15px rgba(59, 130, 246, 0.5)' }}
           transition={{ duration: 0.2 }}
           type="submit"
           className="auth-button"
@@ -232,38 +191,43 @@ const Register = () => {
 const TypingTest = () => {
   const [textType, setTextType] = useState('sentence');
   const [text, setText] = useState('');
-  const [image, setImage] = useState('');
   const [input, setInput] = useState('');
   const [wpm, setWpm] = useState(0);
   const [startTime, setStartTime] = useState(null);
   const [trials, setTrials] = useState(0);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [raceParticipants, setRaceParticipants] = useState([]);
   const [aiWpm, setAiWpm] = useState(40);
-  const [aiProgress, setAiProgress] = useState(0);
+  const [aiText, setAiText] = useState('');
   const [isSampleGame, setIsSampleGame] = useState(false);
   const [error, setError] = useState(null);
+  const [showTryMore, setShowTryMore] = useState(false);
+  const [isWordModeStopped, setIsWordModeStopped] = useState(false);
+  const [aiFinished, setAiFinished] = useState(false);
+  const [aiFinalWpm, setAiFinalWpm] = useState(0);
+  const [countdown, setCountdown] = useState(null);
+  const [hasStartedTyping, setHasStartedTyping] = useState(false);
   const mode = new URLSearchParams(window.location.search).get('mode');
-  const invite = new URLSearchParams(window.location.search).get('invite');
   const navigate = useNavigate();
 
   const fetchText = useCallback(async () => {
+    console.log('Fetching text for type:', textType);
     try {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/typing/text?type=${textType}`);
       setText(res.data.text || '');
-      setImage(res.data.image || '');
+      setAiText('');
+      setAiFinished(false);
+      setAiFinalWpm(0);
       setError(null);
+      setCountdown(mode === 'ai' && !isSampleGame ? 3 : null);
+      setHasStartedTyping(false);
     } catch (err) {
       setError('Failed to fetch text. Please try again.');
       console.error('Error fetching text:', err);
     }
-  }, [textType]);
+  }, [textType, mode, isSampleGame]);
 
   useEffect(() => {
-    socket.connect();
-
     const token = localStorage.getItem('token');
-    if (mode !== 'practice' && !token) {
+    if (mode === 'ai' && !token) {
       navigate('/login');
       return;
     }
@@ -276,80 +240,144 @@ const TypingTest = () => {
       .catch(() => setTrials(3));
 
     fetchText();
+  }, [mode, textType, fetchText, navigate]);
 
-    if (mode === 'compete' || invite) {
-      socket.emit('joinRace', { invite });
-      socket.on('raceUpdate', (participants) => {
-        if (participants.length < 2) {
-          alert('Waiting for opponent...');
-          navigate('/');
-        } else {
-          setRaceParticipants(participants);
-        }
-      });
-      socket.on('leaderboardUpdate', (data) => setLeaderboard(data || []));
-    } else if (mode === 'ai' && !isSampleGame) {
-      const aiInterval = setInterval(() => {
-        setAiProgress((prev) => {
-          const newProgress = prev + (aiWpm / (text.split(' ').length || 1)) * (100 / 60);
-          if (newProgress >= 100) {
-            clearInterval(aiInterval);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 1000);
-      return () => clearInterval(aiInterval);
+  useEffect(() => {
+    if (countdown !== null && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (countdown === 0) {
+      setCountdown(null);
     }
+  }, [countdown]);
 
-    return () => {
-      socket.off('raceUpdate');
-      socket.off('leaderboardUpdate');
-      socket.disconnect();
-    };
-  }, [mode, invite, text, isSampleGame, fetchText, navigate, aiWpm]);
+  useEffect(() => {
+    if (
+      mode === 'ai' &&
+      !isSampleGame &&
+      text &&
+      !aiFinished &&
+      !isWordModeStopped &&
+      countdown === null &&
+      hasStartedTyping
+    ) {
+      const start = new Date();
+      const charsPerWord = 5;
+      const msPerChar = (60 / (aiWpm * charsPerWord)) * 1000;
+      let index = 0;
+      const aiTypingInterval = setInterval(() => {
+        if (index < text.length) {
+          setAiText(text.slice(0, index + 1));
+          index++;
+        } else {
+          clearInterval(aiTypingInterval);
+          setAiFinished(true);
+          const endTime = new Date();
+          const timeTaken = (endTime - start) / 1000 / 60;
+          const wordCount = text.split(' ').length || 1;
+          setAiFinalWpm(Math.round(wordCount / timeTaken));
+        }
+      }, msPerChar);
+      return () => clearInterval(aiTypingInterval);
+    }
+  }, [mode, isSampleGame, text, aiWpm, textType, isWordModeStopped, countdown, hasStartedTyping, aiFinished]);
+
+  const calculateWpm = (inputText, start, end) => {
+    if (!start || !end) return 0;
+    const timeTaken = (end - start) / 1000 / 60;
+    const wordCount = inputText.trim().split(/\s+/).length || 1;
+    return timeTaken > 0 ? Math.round(wordCount / timeTaken) : 0;
+  };
 
   const handleInput = (e) => {
     const value = e.target.value;
     setInput(value);
+    if (!hasStartedTyping && value) {
+      setHasStartedTyping(true);
+    }
+
     if (value === text) {
       const endTime = new Date();
-      const timeTaken = (endTime - startTime) / 1000 / 60;
-      const wordCount = text.split(' ').length || 1;
-      const calculatedWpm = Math.round(wordCount / timeTaken);
-      setWpm(calculatedWpm);
+      const finalWpm = calculateWpm(value, startTime, endTime);
+      setWpm(finalWpm);
 
       if (isSampleGame) {
-        setAiWpm(calculatedWpm);
+        setAiWpm(finalWpm);
         setIsSampleGame(false);
         setInput('');
+        setAiText('');
+        setWpm(0);
+        setStartTime(null);
+        setAiFinished(false);
+        setAiFinalWpm(0);
         fetchText();
         return;
       }
 
-      if (mode === 'compete' || invite) {
-        socket.emit('raceComplete', { wpm: calculatedWpm, userId: localStorage.getItem('token') });
-      } else if (mode === 'ai') {
-        setAiWpm((prev) => (prev + calculatedWpm) / 2);
+      if (mode === 'ai') {
+        setAiWpm((prev) => (prev + finalWpm) / 2);
       }
 
       const token = localStorage.getItem('token');
       if (!token && trials >= 3) {
         navigate('/login');
       } else {
-        axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/typing/trials`,
-          { trials: trials + 1 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+        axios
+          .post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/typing/trials`,
+            { trials: trials + 1 },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
           .then(() => setTrials(trials + 1))
           .catch(() => setTrials(trials + 1));
+
         setInput('');
-        setAiProgress(0);
-        fetchText();
+        setAiText('');
+        setStartTime(null);
+        setAiFinished(false);
+        setAiFinalWpm(0);
+        setShowTryMore(true);
+        setTimeout(() => {
+          setShowTryMore(false);
+          setWpm(0);
+        }, 5000);
       }
     }
-    if (!startTime) setStartTime(new Date());
+    if (!startTime && value) setStartTime(new Date());
+  };
+
+  const handleTextTypeChange = (e) => {
+    const newType = e.target.value;
+    console.log('Dropdown event fired. Current textType:', textType, 'New value:', newType);
+    setTextType(newType);
+    setInput('');
+    setAiText('');
+    setWpm(0);
+    setStartTime(null);
+    setShowTryMore(false);
+    setIsWordModeStopped(false);
+    setAiFinished(false);
+    setAiFinalWpm(0);
+    setCountdown(null);
+    setHasStartedTyping(false);
+    fetchText();
+  };
+
+  const handleTryMore = () => {
+    setShowTryMore(false);
+    setInput('');
+    setAiText('');
+    setWpm(0);
+    setStartTime(null);
+    setAiFinished(false);
+    setAiFinalWpm(0);
+    setCountdown(null);
+    setHasStartedTyping(false);
+    fetchText();
+  };
+
+  const handleStopWords = () => {
+    setIsWordModeStopped(true);
   };
 
   const renderText = () => {
@@ -366,10 +394,26 @@ const TypingTest = () => {
     });
   };
 
+  const renderAiText = () => {
+    if (!aiText) return null;
+    return (
+      <>
+        {aiText}
+        {!aiFinished && <span className="blinking-cursor">|</span>}
+      </>
+    );
+  };
+
   const startSampleGame = () => {
     setIsSampleGame(true);
     setInput('');
+    setAiText('');
     setWpm(0);
+    setStartTime(null);
+    setAiFinished(false);
+    setAiFinalWpm(0);
+    setCountdown(null);
+    setHasStartedTyping(false);
     fetchText();
   };
 
@@ -393,14 +437,14 @@ const TypingTest = () => {
       <motion.h1
         initial={{ y: -20 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
         className="typing-title"
       >
-        Typing {mode === 'practice' ? 'Practice' : mode === 'ai' ? 'AI Challenge' : 'Race'}
+        Typing {mode === 'practice' ? 'Practice' : 'AI Challenge'}
       </motion.h1>
-      {mode === 'ai' && !isSampleGame && (
+      {mode === 'ai' && !isSampleGame && countdown === null && (
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, boxShadow: '0 0 15px rgba(245, 158, 11, 0.5)' }}
           transition={{ duration: 0.2 }}
           onClick={startSampleGame}
           className="button-primary"
@@ -408,33 +452,28 @@ const TypingTest = () => {
           Play Sample Game to Set AI Speed
         </motion.button>
       )}
+      {countdown !== null && (
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="countdown"
+        >
+          {countdown > 0 ? countdown : 'Start!'}
+        </motion.div>
+      )}
       <motion.div
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.5 }}
         className="text-type-select-container"
       >
-        <select
-          value={textType}
-          onChange={(e) => {
-            setTextType(e.target.value);
-            fetchText();
-          }}
-          className="text-type"
-        >
-          <option value="word">Words</option>
+        <select value={textType} onChange={handleTextTypeChange} className="text-type">
+          <option value="word">Word</option>
           <option value="sentence">Sentence</option>
           <option value="paragraph">Paragraph</option>
         </select>
       </motion.div>
-      <motion.img
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        src={image || 'https://via.placeholder.com/300?text=Placeholder'}
-        alt="Text-related"
-        className="typing-image"
-      />
       <motion.p
         initial={{ y: 20 }}
         animate={{ y: 0 }}
@@ -443,6 +482,16 @@ const TypingTest = () => {
       >
         {renderText()}
       </motion.p>
+      {mode === 'ai' && (
+        <motion.p
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="ai-typing-text"
+        >
+          AI: {renderAiText()}
+        </motion.p>
+      )}
       <motion.input
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
@@ -451,72 +500,39 @@ const TypingTest = () => {
         value={input}
         onChange={handleInput}
         className="typing-input"
-        placeholder="Start typing..."
+        placeholder={countdown !== null ? 'Wait for countdown...' : 'Start typing...'}
+        disabled={isWordModeStopped || countdown !== null}
       />
-      {wpm > 0 && (
-        <motion.p
+      {showTryMore && (
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="wpm-result"
+          className="wpm-try-more-container"
         >
-          Your WPM: {wpm}
-        </motion.p>
-      )}
-      {(mode === 'compete' || invite) && raceParticipants.length > 0 && (
-        <motion.div
-          initial={{ y: 20 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="race-progress"
-        >
-          <h2 className="race-title">Race Progress</h2>
-          {raceParticipants.map((p) => (
-            <div key={p.id} className="race-participant">
-              <p>{p.id}: {p.progress}%</p>
-              <div className="progress-bar">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${p.progress}%` }}
-                  transition={{ duration: 0.5 }}
-                  className="progress-fill"
-                />
-              </div>
-            </div>
-          ))}
-          <h2 className="leaderboard-title">Leaderboard</h2>
-          <ul className="leaderboard-list">
-            {leaderboard.map((entry, i) => (
-              <motion.li
-                initial={{ x: -20 }}
-                animate={{ x: 0 }}
-                transition={{ duration: 0.5 }}
-                key={i}
-              >
-                User {i + 1}: {entry.wpm} WPM
-              </motion.li>
-            ))}
-          </ul>
+          <span className="wpm-comparison">
+            Your WPM: {wpm} {mode === 'ai' && aiFinalWpm > 0 ? ` | AI WPM: ${aiFinalWpm}` : ''}
+          </span>
+          <motion.button
+            whileHover={{ scale: 1.05, boxShadow: '0 0 15px rgba(139, 92, 246, 0.5)' }}
+            transition={{ duration: 0.2 }}
+            onClick={handleTryMore}
+            className="button-primary try-more-button"
+          >
+            Try More?
+          </motion.button>
         </motion.div>
       )}
-      {mode === 'ai' && !isSampleGame && (
-        <motion.div
-          initial={{ y: 20 }}
-          animate={{ y: 0 }}
+      {textType === 'word' && !isWordModeStopped && countdown === null && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
-          className="ai-progress"
+          onClick={handleStopWords}
+          className="button-stop"
         >
-          <h2 className="ai-title">AI Progress</h2>
-          <p>AI: {aiProgress.toFixed(1)}%</p>
-          <div className="progress-bar">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${aiProgress}%` }}
-              transition={{ duration: 0.5 }}
-              className="ai-progress-fill"
-            />
-          </div>
-        </motion.div>
+          Stop
+        </motion.button>
       )}
     </motion.div>
   );
