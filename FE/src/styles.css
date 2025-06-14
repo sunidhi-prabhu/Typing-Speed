@@ -1,0 +1,266 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.home-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #4b0082, #ff0077);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  padding: 20px;
+}
+
+.home-title {
+  font-size: 48px;
+  font-weight: 800;
+  margin-bottom: 32px;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.button {
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 18px;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s;
+}
+
+.button-practice {
+  background-color: #10b981;
+}
+
+.button-practice:hover {
+  background-color: #059669;
+}
+
+.button-ai {
+  background-color: #f59e0b;
+}
+
+.button-ai:hover {
+  background-color: #b45309;
+}
+
+.button-invite {
+  background-color: #8b5cf6;
+}
+
+.button-invite:hover {
+  background-color: #6db2f6;
+}
+
+.login-prompt {
+  font-size: 16px;
+  color: #bfdbfe;
+}
+
+.start-link-container {
+  margin-top: 16px;
+}
+
+.start-link {
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s;
+}
+
+.start-link:hover {
+  background-color: #2563eb;
+}
+
+.auth-links {
+  margin-top: 16px;
+}
+
+.auth-link {
+  color: #bfdbfe;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-container {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-form {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.auth-input {
+  width: calc(100% - 16px);
+  padding: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.auth-button {
+  background-color: #3b82f6;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.auth-button:hover {
+  background-color: #2563eb;
+}
+
+.typing-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #f3f4f6, #e0f2fe);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+.typing-title {
+  color: #4f46e5;
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  color: #ef4444;
+  margin-bottom: 16px;
+}
+
+.button-primary {
+  background-color: #f97316;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: background-color 0.2s;
+}
+
+.button-primary:hover {
+  background-color: #ea580c;
+}
+
+.text-type-select-container {
+  margin-bottom: 16px;
+}
+
+.text-type {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
+
+.typing-image {
+  width: 256px;
+  height: 256px;
+  object-fit: cover;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.typing-text {
+  font-size: 18px;
+  font-family: monospace;
+  margin-bottom: 16px;
+}
+
+.text-correct {
+  color: #22c55e;
+}
+
+.text-incorrect {
+  color: #ef4444;
+}
+
+.typing-input {
+  width: calc(100% - 16px);
+  max-width: 400px;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
+}
+
+.wpm-result {
+  margin-top: 20px;
+  font-size: 24px;
+  color: #4f46e5;
+}
+
+.ai-progress {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.ai-title {
+  color: #4f46e5;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.ai-progress-fill {
+  background-color: #ef4444;
+  height: 8px;
+  border-radius: 8px;
+}
